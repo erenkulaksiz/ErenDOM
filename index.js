@@ -95,7 +95,7 @@ ErenDOM.onStateChange = function () {
             type: "input",
             onInput: ({ event, vnode }) => {
               ErenDOM.setState({ input: event.target.value });
-              ErenDOM.selectNode(vnode.identifier).focus();
+              //ErenDOM.selectNode(vnode.identifier).focus();
             },
             value: state.input,
             props: {

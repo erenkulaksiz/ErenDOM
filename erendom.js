@@ -1,29 +1,71 @@
+function guid() {
+  function _p8(s) {
+    var p = (Math.random().toString(16) + "000000000").substr(2, 8);
+    return s ? "-" + p.substr(0, 4) + "-" + p.substr(4, 4) : p;
+  }
+  return _p8() + _p8(true) + _p8(true) + _p8();
+}
+
 var ErenDOM = {
   render(content, root) {
-    //while (root.hasChildNodes()) root.removeChild(root.firstChild);
-    //root.appendChild(content?.element);
-    console.log("rendering", content);
     const { vnode = null } = content;
     if (vnode) {
-      const element = document.createElement(vnode.type);
+      const element = this.vnodeToElement(vnode);
 
-      if (vnode.props) {
-        Object.keys(vnode.props).forEach(prop => {
-          if (prop == "style") {
-            Object.keys(vnode.props[prop]).forEach(style => {
-              element.style[style] = vnode.props[prop][style];
-            });
-          } else {
-            element.setAttribute(prop, vnode.props[prop])
-          }
-        });
-      }
+      console.log(vnode);
 
-      console.log(element);
+      while (root.hasChildNodes()) root.removeChild(root.firstChild);
+      root.appendChild(element);
     }
   },
   appendChild(parent, child) {
     parent.appendChild(child);
+  },
+  vnodeToElement(vnode) {
+    if (!vnode?.type) {
+      return document.createTextNode(vnode);
+    }
+    const element = document.createElement(vnode.type);
+
+    if (vnode.props) {
+      Object.keys(vnode.props).forEach(prop => {
+        if (prop == "style") {
+          Object.keys(vnode.props[prop]).forEach(style => {
+            element.style[style] = vnode.props[prop][style];
+          });
+        } else {
+          element.setAttribute(prop, vnode.props[prop])
+        }
+      });
+    }
+
+    if (vnode.onClick) {
+      element.addEventListener("click", event => {
+        vnode.onClick({ event, vnode });
+      });
+    }
+
+    if (vnode.onInput) {
+      element.addEventListener("input", event => {
+        vnode.onInput({ event, vnode });
+      });
+    }
+
+    if (vnode.value) {
+      element.value = vnode.value;
+    }
+
+    if (vnode.children) {
+      if (Array.isArray(vnode.children)) {
+        vnode.children.forEach(child => {
+          ErenDOM.appendChild(element, ErenDOM.vnodeToElement(child));
+        });
+      } else {
+        ErenDOM.appendChild(element, ErenDOM.vnodeToElement(vnode.children));
+      }
+    }
+
+    return element;
   },
   createNode({
     props,
@@ -44,7 +86,7 @@ var ErenDOM = {
     let vnodeIdentifier = {};
 
     if (!identifier) {
-      vnodeIdentifier = { toString: type, _vnode: "uuid" };
+      vnodeIdentifier = { toString: type, _vnode: guid() };
       if (props?.id || props?.class) {
         if (props?.id) {
           vnodeIdentifier.toString += `#${props.id}`;
@@ -93,6 +135,7 @@ var ErenDOM = {
         onClick
       }
     }
+
     if (typeof onInput == "function") {
       vnode = {
         ...vnode,
