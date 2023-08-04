@@ -1,9 +1,9 @@
-let state = {
+ErenDOM.setState({
   click: 0,
   toggle: false,
   input: "",
   renders: 0,
-};
+})
 
 const button = ({ newClick, text }) => ErenDOM.createNode({
   children: text,
@@ -13,15 +13,13 @@ const button = ({ newClick, text }) => ErenDOM.createNode({
   }
 });
 
-const resetButton = () => {
-  return ErenDOM.createNode({
-    children: "reset",
-    type: "button",
-    onClick(e) {
-      ErenDOM.setState({ click: 0 });
-    }
-  });
-}
+const resetButton = () => ErenDOM.createNode({
+  children: "reset",
+  type: "button",
+  onClick(e) {
+    ErenDOM.setState({ click: 0 });
+  }
+});
 
 ErenDOM.onStateChange = function () {
   const content = ErenDOM.createNode({
@@ -36,7 +34,7 @@ ErenDOM.onStateChange = function () {
         "margin": "5px"
       },
       id: "selam",
-      class: state.toggle ? "toggle--active" : "toggle--inactive",
+      class: ErenDOM.getState().toggle ? "toggle--active" : "toggle--inactive",
     },
     children: [
       ErenDOM.createNode({
@@ -45,7 +43,7 @@ ErenDOM.onStateChange = function () {
             "font-size": "24px"
           }
         },
-        children: state.click,
+        children: ErenDOM.getState().click,
       }),
       ErenDOM.createNode({
         props: {
@@ -53,7 +51,7 @@ ErenDOM.onStateChange = function () {
             "font-size": "24px"
           }
         },
-        children: state.input,
+        children: ErenDOM.getState().input,
       }),
       ErenDOM.createNode({
         props: {
@@ -64,17 +62,17 @@ ErenDOM.onStateChange = function () {
           }
         },
         children: [
-          button({ newClick: state.click - 1, text: "-" }),
-          button({ newClick: state.click + 1, text: "+" }),
+          button({ newClick: ErenDOM.getState().click - 1, text: "-" }),
+          button({ newClick: ErenDOM.getState().click + 1, text: "+" }),
           resetButton(),
           ErenDOM.createNode({
             type: "button",
             children: "style test",
-            onClick: () => ErenDOM.setState({ toggle: !state.toggle }),
+            onClick: () => ErenDOM.setState({ toggle: !ErenDOM.getState().toggle }),
             props: {
               id: "test",
               style: {
-                "background-color": state.toggle ? "red" : "blue"
+                "background-color": ErenDOM.getState().toggle ? "red" : "blue"
               }
             },
           }),
@@ -87,7 +85,7 @@ ErenDOM.onStateChange = function () {
             props: {
               id: "test",
               style: {
-                "background-color": state.toggle ? "red" : "blue"
+                "background-color": ErenDOM.getState().toggle ? "red" : "blue"
               }
             },
           }),
@@ -95,9 +93,9 @@ ErenDOM.onStateChange = function () {
             type: "input",
             onInput: ({ event, vnode }) => {
               ErenDOM.setState({ input: event.target.value });
-              //ErenDOM.selectNode(vnode.identifier).focus();
+              ErenDOM.selectNode(vnode).focus();
             },
-            value: state.input,
+            value: ErenDOM.getState().input,
             props: {
               placeholder: "test",
               id: "testinput",

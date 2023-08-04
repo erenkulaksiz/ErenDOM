@@ -1,22 +1,34 @@
-function guid() {
-  function _p8(s) {
-    var p = (Math.random().toString(16) + "000000000").substr(2, 8);
-    return s ? "-" + p.substr(0, 4) + "-" + p.substr(4, 4) : p;
-  }
-  return _p8() + _p8(true) + _p8(true) + _p8();
-}
-
 var ErenDOM = {
+  _vnode: 1,
+  renderedVnodeTree: null,
+  renderedTree: null,
+  state: {},
+  getState: () => ErenDOM.state,
+  setState(newState) {
+    ErenDOM.state = {
+      ...ErenDOM.state,
+      ...newState
+    }
+    ErenDOM.callStateChange();
+  },
   render(content, root) {
     const { vnode = null } = content;
-    if (vnode) {
-      const element = this.vnodeToElement(vnode);
 
-      console.log(vnode);
+    if (!vnode) return console.error("vnode is null");
+    if (!root) return console.error("root is null");
 
-      while (root.hasChildNodes()) root.removeChild(root.firstChild);
-      root.appendChild(element);
+    if (ErenDOM.renderedVnodeTree) {
+      console.log("beforeRender", ErenDOM.renderedVnodeTree, "afterRender", vnode);
     }
+
+    const element = ErenDOM.vnodeToElement(vnode);
+
+    while (root.hasChildNodes()) root.removeChild(root.firstChild);
+    ErenDOM.appendChild(root, element);
+
+    ErenDOM.renderedTree = element;
+    ErenDOM.renderedVnodeTree = vnode;
+    ErenDOM._vnode = 1;
   },
   appendChild(parent, child) {
     parent.appendChild(child);
@@ -55,6 +67,10 @@ var ErenDOM = {
       element.value = vnode.value;
     }
 
+    if (vnode.identifier.guid) {
+      element.setAttribute("data-erendom-identifier", vnode.identifier.guid);
+    }
+
     if (vnode.children) {
       if (Array.isArray(vnode.children)) {
         vnode.children.forEach(child => {
@@ -86,7 +102,7 @@ var ErenDOM = {
     let vnodeIdentifier = {};
 
     if (!identifier) {
-      vnodeIdentifier = { toString: type, _vnode: guid() };
+      vnodeIdentifier = { toString: type, guid: ErenDOM._vnode++ };
       if (props?.id || props?.class) {
         if (props?.id) {
           vnodeIdentifier.toString += `#${props.id}`;
@@ -106,6 +122,7 @@ var ErenDOM = {
     } else {
       vnodeIdentifier = identifier;
     }
+
     vnode = {
       ...vnode,
       identifier: vnodeIdentifier,
@@ -143,40 +160,21 @@ var ErenDOM = {
       }
     }
 
-    if (props) {
-      if (props.style) {
-        let allStyles = "";
-        Object.keys(props.style).forEach(style => {
-          allStyles += `${style}:${props.style[style]};`;
-        });
-      }
-    }
-
     if (typeof onNodeMount == "function") {
       onNodeMount(vnode);
     }
 
     return { vnode };
   },
-  setState(newState) {
-    state = {
-      ...state,
-      ...newState
-    }
-    this.callStateChange();
-  },
   onMount() {
-    window.removeEventListener('DOMContentLoaded', e => this.callStateChange(e));
-    window.addEventListener('DOMContentLoaded', e => this.callStateChange(e));
+    window.removeEventListener('DOMContentLoaded', e => ErenDOM.callStateChange(e));
+    window.addEventListener('DOMContentLoaded', e => ErenDOM.callStateChange(e));
   },
   callStateChange(e) {
     if (typeof ErenDOM.onStateChange == "function") ErenDOM.onStateChange(e);
   },
-  selectNode(node) {
-    if (node?.id) return document.getElementById(node.id);
-    if (node?.class) return document.getElementsByClassName(node.class);
-    // otherwise we need to search for node identifier
-    // identifier: node._vnode
+  selectNode(vnode) {
+    return ErenDOM.renderedTree.querySelector(`[data-erendom-identifier="${vnode.identifier.guid}"]`);
   },
 }
 
